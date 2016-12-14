@@ -1,9 +1,10 @@
 function Initialize()
     -- global constants
-    updateSpeedName         = "MeterResult"
+    updateSpeedName         = "MeterSpeedVal"
     updateTorrentCountName  = "MeterTotalCountVal"
     updateUploadCountName   = "MeterTotalUpCountVal"
     updateDownloadCountName = "MeterTotalDownCountVal"
+    toggleStatusButtonName  = "MeterToggleStatus"
 
     speedFormat = "%04.1f %s"
     countFormat = "%02d"
@@ -23,8 +24,30 @@ function Update()
     if inputString ~= "" then
         updateSpeed()
         updateTorrentCount()
-        updateUploadCount()
-        updateDownloadCount()
+        upCount   = updateUploadCount()
+        downCount = updateDownloadCount()
+        updateStatusButtonText()
+    end
+end
+
+function updateStatusButtonText()
+    measureRunDeluge = SKIN:GetMeasure("MeasureRunDeluge")
+    inputString      = measureRunDeluge:GetStringValue()
+    local outText = "Resume All"
+
+    if (string.find(inputString, "State: D") or string.find(inputString, "State: U")) then
+        outText = "Pause All"
+    end
+
+    SKIN:Bang('!SetOption', toggleStatusButtonName, 'Text', outText)
+end
+
+function updateStatus()
+
+    if (upCount + downCount == 0) then
+        SKIN:Bang("!CommandMeasure MeasureResumeAll Run")
+    else
+        SKIN:Bang("!CommandMeasure MeasurePauseAll Run")
     end
 end
 
@@ -51,12 +74,14 @@ function updateUploadCount()
     local count = countHelper(uploadSearchPattern[1], uploadSearchPattern[2])
 
     SKIN:Bang('!SetOption', updateUploadCountName, 'Text', count)
+    return count;
 end
 
 function updateDownloadCount()
     local count = countHelper(downloadSearchPattern[1], downloadSearchPattern[2])
 
     SKIN:Bang('!SetOption', updateDownloadCountName, 'Text', count)
+    return count
 end
 
 function getDownSpeed()
