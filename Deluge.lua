@@ -55,7 +55,7 @@ function updateSpeed()
     local down = getDownSpeed()
     local up   = getUpSpeed()
 
-    SKIN:Bang('!SetOption', updateSpeedName, 'Text', down .. " / " .. up)
+    SKIN:Bang('!SetOption', updateSpeedName, 'Text', up .. " / " .. down)
 end
 
 function updateTorrentCount()
