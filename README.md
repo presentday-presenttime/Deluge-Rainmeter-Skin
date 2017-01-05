@@ -4,6 +4,7 @@ Skin that uses deluge-console to display data about current torrents
 #Todo:
 * !properly limit update so deluge isn't tied to the rest of the skin updating, and deluge won't update if the previous one is still running.
 * Individual torrent view
+* Sorting options for torrent view
 
 #v0.2:
 * Remote Connection (not fully tested)
