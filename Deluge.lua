@@ -1,4 +1,6 @@
 function Initialize()
+    torrentListLength = SKIN:GetVariable('TorrentsToShow', 5);
+
     -- global constants
     updateSpeedName         = "MeterSpeedVal"
     updateTorrentCountName  = "MeterTotalCountVal"
@@ -9,7 +11,8 @@ function Initialize()
     speedFormat = "%04.1f %s"
     countFormat = "%02d"
 
-    numberSearchPattern   = "%d*.%d* %aiB/s"
+    torrentInfoPattern  = "Name:.-"
+    numberSearchPattern = "%d*.%d* %aiB/s"
     -- the second value is the length of the prefix
     uploadSearchPattern   = {("Up Speed: "   .. numberSearchPattern), 10}
     downloadSearchPattern = {("Down Speed: " .. numberSearchPattern), 12}
@@ -21,18 +24,22 @@ function Update()
     measureRunDeluge = SKIN:GetMeasure("MeasureRunDeluge")
     inputString      = measureRunDeluge:GetStringValue()
 
+    getTorrentInfo()
+end
+
+-- GeneralInfo Functions
+function getGeneralInfo()
     if inputString ~= "" then
         updateSpeed()
         updateTorrentCount()
         upCount   = updateUploadCount()
         downCount = updateDownloadCount()
-        updateStatusButtonText()
+        playPauseAllButtonText()
     end
 end
 
-function updateStatusButtonText()
-    measureRunDeluge = SKIN:GetMeasure("MeasureRunDeluge")
-    inputString      = measureRunDeluge:GetStringValue()
+function playPauseAllButtonText()
+    Update()
     local outText = "Resume All"
 
     if (string.find(inputString, "State: D") or string.find(inputString, "State: U")) then
@@ -42,8 +49,7 @@ function updateStatusButtonText()
     SKIN:Bang('!SetOption', toggleStatusButtonName, 'Text', outText)
 end
 
-function updateStatus()
-
+function playPauseAll()
     if (upCount + downCount == 0) then
         SKIN:Bang("!CommandMeasure MeasureResumeAll Run")
     else
@@ -198,4 +204,48 @@ function getMatchTable(pattern)
     until not matchEnd
 
     return outTable
+end
+
+-- TorrentList Functions
+function getTorrentListInfo()
+    if inputString ~= "" then
+        if torrentTable.getn ~= torrentListLength then
+            getTorrentTable()
+        end
+        for _, torrent in pairs(torrentTable) do
+            -- update all torrents
+            torrent.info = getTorrentInfo(torrent.index);
+        end
+    end
+end
+
+-- creates a table of torrent objects, with references to the rainmeter Meters & relevant info.
+function getTorrentTable()
+    local i = 1
+    torrentTable = {};
+    while i <= torrentListLength do
+        local torrent = {
+            meters = {
+                index        = i,
+                name         = SKIN:GetMeter("Torrent"..i.."Name"),
+                string       = SKIN:GetMeter("Torrent"..i.."String"),
+                statusButton = SKIN:GetMeter("Torrent"..i.."ToggleStatus"),
+                removeButton = SKIN:GetMeter("Torrent"..i.."Remove"),
+            }
+        }
+        table.insert(torrentTable, torrent)
+        i = i + 1;
+    end
+end
+
+function getTorrentInfo(index)
+    inputTorrentList = getMatchTable(torrentInfoPattern);
+    local count = 0
+
+    for _,_ in pairs(inputTorrentList) do
+        count = count + 1
+    end
+
+    print(count)
+    print(string.find(inputTorrentList[2], "ID: "))
 end
