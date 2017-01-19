@@ -1,5 +1,5 @@
 function Initialize()
-    torrentListLength = SKIN:GetVariable('TorrentsToShow', 5);
+    torrentListLength = tonumber(SKIN:GetVariable('TorrentsToShow', 5));
 
     -- global constants
     updateSpeedName         = "MeterSpeedVal"
@@ -18,13 +18,15 @@ function Initialize()
     downloadSearchPattern = {("Down Speed: " .. numberSearchPattern), 12}
 
     unitSize = {"KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"}
+
+    torrentTable = {};
 end
 
 function Update()
     measureRunDeluge = SKIN:GetMeasure("MeasureRunDeluge")
     inputString      = measureRunDeluge:GetStringValue()
 
-    getTorrentInfo()
+    -- getTorrentInfo()
 end
 
 -- GeneralInfo Functions
@@ -215,9 +217,13 @@ function getTorrentListInfo()
         for _, torrent in pairs(torrentTable) do
             -- update all torrents
             torrent.info = getTorrentInfo(torrent.index);
+            SKIN:Bang('!SetOption', "Torrent"..torrent.index.."Name", 'Text', torrent.info.name)
+            SKIN:Bang('!SetOption', "Torrent"..torrent.index.."String", 'Text', torrent.info.body)
         end
     end
 end
+
+
 
 -- creates a table of torrent objects, with references to the rainmeter Meters & relevant info.
 function getTorrentTable()
@@ -225,8 +231,8 @@ function getTorrentTable()
     torrentTable = {};
     while i <= torrentListLength do
         local torrent = {
+            index  = i,
             meters = {
-                index        = i,
                 name         = SKIN:GetMeter("Torrent"..i.."Name"),
                 string       = SKIN:GetMeter("Torrent"..i.."String"),
                 statusButton = SKIN:GetMeter("Torrent"..i.."ToggleStatus"),
@@ -239,13 +245,53 @@ function getTorrentTable()
 end
 
 function getTorrentInfo(index)
-    inputTorrentList = getMatchTable(torrentInfoPattern);
-    local count = 0
+    inputTorrentList = Split(inputString, "Name: ");
+    local info = {}
+    local torrentInfo = Split(inputTorrentList[index+1], "\n")[1]
 
-    for _,_ in pairs(inputTorrentList) do
-        count = count + 1
+    info.name = torrentInfo
+    info.body = Split(inputTorrentList[index+1], torrentInfo)[2]
+
+    print(info.body)
+    return info
+    -- local count = 0
+
+    -- print(index)
+
+    -- for key,val in pairs(inputTorrentList) do
+    --     count = count + 1
+    --     if(count == index) then
+    --         print("key: "..key)
+    --         print("val: "..val)
+    --     end
+    -- end
+
+    -- print("count: " .. count)
+    -- print(string.find(inputTorrentList[2], "ID: "))
+end
+
+-- Compatibility: Lua-5.0
+function Split(str, delim, maxNb)
+    -- Eliminate bad cases...
+    if string.find(str, delim) == nil then
+        return { str }
     end
-
-    print(count)
-    print(string.find(inputTorrentList[2], "ID: "))
+    if maxNb == nil or maxNb < 1 then
+        maxNb = 0    -- No limit
+    end
+    local result = {}
+    local pat = "(.-)" .. delim .. "()"
+    local nb = 0
+    local lastPos
+    for part, pos in string.gmatch(str, pat) do
+        nb = nb + 1
+        result[nb] = part
+        lastPos = pos
+        if nb == maxNb then break end
+    end
+    -- Handle the last field
+    if nb ~= maxNb then
+        result[nb + 1] = string.sub(str, lastPos)
+    end
+    return result
 end
