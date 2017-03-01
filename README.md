@@ -6,6 +6,10 @@ Skin that uses deluge-console to display data about current torrents
 * Individual torrent view
 * Sorting options for torrent view
 
+#v0.2.8:
+* pushing to work on bug with no torrents appearing.
+* major framework changes, functionality should be the same.
+
 #v0.2:
 * Remote Connection (not fully tested)
 * pause/resume All button

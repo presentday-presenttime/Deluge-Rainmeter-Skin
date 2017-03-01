@@ -25,7 +25,10 @@ end
 function Update()
     measureRunDeluge = SKIN:GetMeasure("MeasureRunDeluge")
     inputString      = measureRunDeluge:GetStringValue()
-
+    if string.len(inputString) < 40 then
+        print("Unusually short output: ")
+        print(inputString)
+    end
     -- getTorrentInfo()
 end
 
