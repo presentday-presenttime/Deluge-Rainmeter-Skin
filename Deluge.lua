@@ -148,11 +148,12 @@ function byteStringToFloat(byteString)
     if not num or num == 0 then return 0 end
 
     sIdx, eIdx = string.find(byteString, unitPattern)
+    eIdx = eIdx - 2
     unit       = string.sub(byteString, sIdx, eIdx)
 
     for exponent,string in pairs(unitSize) do
         if unit == string then
-            exp = exponent
+            exp = exponent - 1
             break
         end
     end
