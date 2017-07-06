@@ -18,18 +18,18 @@ function Initialize()
     local outFile = SKIN:MakePathAbsolute('out.txt')
 
     local keyWordTable = {"Name: ",
-                          "ID: ",
-                          "State: ",
-                          "Up Speed: ",
-                          "Seeds: ",
-                          "Availability: ",
-                          "Size: ",
-                          "Ratio: ",
-                          "Seed time: ",
-                          "Active: ",
-                          "Tracker status: ",
-                          "::Files",
-                          "::Peers"}
+    "ID: ",
+    "State: ",
+    "Up Speed: ",
+    "Seeds: ",
+    "Availability: ",
+    "Size: ",
+    "Ratio: ",
+    "Seed time: ",
+    "Active: ",
+    "Tracker status: ",
+    "::Files",
+    "::Peers"}
 
     -- create a table of torrent objects,
     -- each containing all the information provided from the input
@@ -39,30 +39,55 @@ function Initialize()
 
     local lineTable   = readFile(inFile)
     local fileStr     = ""
-    local prevWord    = {"s" = nil, "e" = nil}
-    local currentWord = {"s" = nil, "e" = nil}
+    local prevWord    = {s = nil, e = nil}
+    local currentWord = {s = nil, e = nil}
 
     for index,line in pairs(lineTable) do -- look through each line
         for _, word in pairs(keyWordTable) do -- check each line for keywords
-            if string.find(line, word) ~= nil then -- if found word, handle it
+            local iStart, iEnd = string.find(line, word)
+            if  iStart ~= nil then -- if found word, handle it
                 prevWord = currentWord
 
-                if      word == "Name: " or
-                        word == "ID: "   or
-                        word == "Tracker status: " then
-
-                elseif  word == "::Files" or
-                        word == "::Peers" then
-
-                else
-
+                if  word == "Name: " or         --whole line
+                    word == "ID: "   or
+                    word == "Tracker status: " then
+                        --torrent[word] = string.sub(line, iEnd)
+                        print(string.sub(line, iEnd))
+                elseif  word == "::Files" then  --series of whole lines
+                    --read lines until "::Peers"
+                    local tIdx = index+1
+                    local tStr = lineTable[tIdx]
+                    local fileString = ""
+                    while   string.find(tStr,"::Peers") ~= nil and
+                            string.find(tStr,"\n")      ~= nil do
+                        fileString = fileString .. tStr
+                    end
+                    print(fileString)
+                elseif  word == "::Peers" then
+                    --read lines until Blank line
+                    --read lines until "::Peers"
+                    local tIdx = index+1
+                    local tStr = lineTable[tIdx]
+                    local fileString = ""
+                    while string.find(tStr,"\n") ~= nil do
+                        fileString = fileString .. tStr
+                    end
+                    print(fileString)
+                else                            --part of a single line
+                    -- local tIdx = index+1
+                    -- local tStr = lineTable[tIdx]
+                    -- for _, word in pairs(keyWordTable) do
+                    --     while string.find(tStr, word) ~= nil do
+                    --         string.sub(tStr, tIdx, string.len(tStr) - 1)
+                    --     end
+                    --     string.sub(tStr, tIdx, string.len(tStr) - string.len(word))
+                    -- end
+                    -- print(tStr)
                 end
                 print('key found: ' .. word .. ' :: ' .. line)
                 fileStr = fileStr  .. 'key found: ' .. word .. ' :: ' .. line .. '\n'
             end
         end
-
-
     end
     -- print(str)
     -- local splitStr = Split(str, "\r\n")
@@ -90,13 +115,14 @@ function getKeyWordString(str, idx, word)
         if tempWord ~= nil then
             if tempWord[1] < nextWord[1] then -- if a word is found with a lower index, use that word
                 nextWord = tempWord
+            end
         end
-    end
 
-    keyWordString = string.sub(str, idx, nextWord[1])
-    currentTorrent.word = keyWordString
-    idx = nextWord[2]
-    return true
+        keyWordString = string.sub(str, idx, nextWord[1])
+        currentTorrent.word = keyWordString
+        idx = nextWord[2]
+        return true
+    end
 end
 
 function readFile(filePath)
