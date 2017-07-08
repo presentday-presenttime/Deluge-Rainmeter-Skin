@@ -37,10 +37,12 @@ function Initialize()
     local curTorrent = nil
 
 
-    local lineTable   = readFile(inFile)
+    local lineTable, lineTableLen   = readFile(inFile)
+    print("lineTableLen: " .. lineTableLen)
     local fileStr     = ""
     local prevWord    = {s = nil, e = nil}
     local currentWord = {s = nil, e = nil}
+    local torrent = {}
 
     for index,line in pairs(lineTable) do -- look through each line
         for _, word in pairs(keyWordTable) do -- check each line for keywords
@@ -51,52 +53,72 @@ function Initialize()
                 if  word == "Name: " or         --whole line
                     word == "ID: "   or
                     word == "Tracker status: " then
-                        --torrent[word] = string.sub(line, iEnd)
-                        print(string.sub(line, iEnd))
+                        torrent[word] = string.sub(line, iEnd)
+                        print("torrent[" .. word .."]: " .. torrent[word])
                 elseif  word == "::Files" then  --series of whole lines
                     --read lines until "::Peers"
-                    local tIdx = index+1
-                    local tStr = lineTable[tIdx]
-                    local fileString = ""
-                    while   string.find(tStr,"::Peers") ~= nil and
-                            string.find(tStr,"\n")      ~= nil do
-                        fileString = fileString .. tStr
+                    local fileTable  = {}
+                    local count      = 1
+                    local tIdx       = index+count
+                    if    tIdx       > lineTableLen then return end
+                    local tStr       = lineTable[tIdx]
+
+                    while   string.find(tStr,"::Peers") == nil and
+                            tStr ~= "" and
+                            tStr ~= nil do
+
+                        fileTable[count] = tStr
+                        print("fileTable["..count.."]" .. fileTable[count])
+
+                        count = count + 1
+                        tIdx = tIdx + 1
+                        tStr = lineTable[tIdx]
                     end
-                    print(fileString)
+                    torrent["files"] = fileTable
                 elseif  word == "::Peers" then
+                    print(line)
                     --read lines until Blank line
                     --read lines until "::Peers"
-                    local tIdx = index+1
-                    local tStr = lineTable[tIdx]
-                    local fileString = ""
-                    while string.find(tStr,"\n") ~= nil do
-                        fileString = fileString .. tStr
+                    local peerTable  = {}
+                    local count      = 1
+                    local tIdx       = index+count
+                    if    tIdx       > lineTableLen then return end
+                    local tStr       = lineTable[tIdx]
+
+                    while   tStr ~= "" and
+                            tStr ~= nil do
+
+                        peerTable[count] = tStr
+                        print("peerTable["..count.."]" .. peerTable[count])
+
+                        count = count + 1
+                        tIdx = tIdx + 1
+                        tStr = lineTable[tIdx]
                     end
-                    print(fileString)
+                    torrent["peers"] = peerTable
                 else                            --part of a single line
-                    -- local tIdx = index+1
-                    -- local tStr = lineTable[tIdx]
-                    -- for _, word in pairs(keyWordTable) do
-                    --     while string.find(tStr, word) ~= nil do
-                    --         string.sub(tStr, tIdx, string.len(tStr) - 1)
-                    --     end
-                    --     string.sub(tStr, tIdx, string.len(tStr) - string.len(word))
-                    -- end
+                    local tIdx = index+1
+                    if    tIdx > lineTableLen then return end
+                    local tStr = lineTable[tIdx]
+                    for _, word2 in pairs(keyWordTable) do
+                        -- while string.find(tStr, word2) == nil do
+                            -- string.sub(tStr, tIdx, string.len(tStr) - 1)
+                        -- end
+                        -- string.sub(tStr, tIdx, string.len(tStr) - string.len(word2))
+                        -- torrent[word2] = tStr
+                    end
                     -- print(tStr)
+
+                    -- torrent[word] = string.sub(line, iEnd)
+                    print("torrent[" .. word2 .."]: " .. torrent[word])
                 end
-                print('key found: ' .. word .. ' :: ' .. line)
-                fileStr = fileStr  .. 'key found: ' .. word .. ' :: ' .. line .. '\n'
             end
         end
     end
-    -- print(str)
-    -- local splitStr = Split(str, "\r\n")
-    -- local i = 0
-    -- for k, v in pairs(splitStr) do
-    --     print(k .. ":~:".. v)
-    --     i = i + 1
-    -- end
-    print(writeFile(outFile, fileStr))
+    for key, val in pairs(torrent) do
+        print("key" .. key)
+        print("val" .. val)
+    end
 end
 
 
@@ -134,16 +156,18 @@ function readFile(filePath)
 
     local temp = file:read()
     local rStr = {}
+    local count = 0
     while temp ~= nil do
         table.insert(rStr, temp)
         temp = file:read()
+        count = count + 1
     end
 
 
     -- local text = file:read()
     file:close()
 
-    return rStr
+    return rStr, count
 end
 
 function writeFile(filePath, text)
