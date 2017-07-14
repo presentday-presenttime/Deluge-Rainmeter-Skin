@@ -1,21 +1,64 @@
--- Example torrent Format
---
--- Name: <>
--- ID: <>
--- State: <> Up Speed: <> ETA: <>
--- Seeds: <> Peers: <> Availability: <>
--- Size: <> Ratio: <>
--- Seed time: <> Active: <>
--- Tracker status: <>
---   ::Files
--- <
--- ...
--- >
---   ::Peers
--- <
--- ...
--- >
+function Initialize()
+    torrentListLength = tonumber(SKIN:GetVariable('TorrentsToShow', 5));
 
+    -- check if these are hidden before updating
+    MeterTotalSpeed         = "MeterTotalSpeed"
+    MeterTotalTorrentCount  = "MeterTotalTorrentCount"
+    MeterTotalUploadCount   = "MeterTotalUploadCount"
+    MeterTotalDownloadCount = "MeterTotalDownloadCount"
+    MeterPlayPauseButton    = "MeterPlayPauseButton"
+
+
+    -- 00.0 KiB/s
+    -- 00
+    speedFormat = "%04.1f %s"
+    countFormat = "%02d"
+    unitSize    = { "KiB", "MiB", "GiB",
+                    "TiB", "PiB", "EiB",
+                    "ZiB", "YiB"}
+
+    -- list of all keywords to look for in the torrent output string
+    keyWordTable = {
+                    "Name: ",
+                    "ID: ",
+                    "State: ",
+                    "Up Speed: ",
+                    "Seeds: ",
+                    "Peers: ",
+                    "Availability: ",
+                    "Size: ",
+                    "Ratio: ",
+                    "Seed time: ",
+                    "Active: ",
+                    "Tracker status: ",
+                    "::Files",
+                    "::Peers"
+                    }
+
+    inFile       = SKIN:MakePathAbsolute('in.txt') -- used for debugging, will not be used in production
+    outFile      = SKIN:MakePathAbsolute('out.txt') -- currently not used
+    torrentTable = {};
+end
+
+function Update()
+    print("stript.Update()")
+    InputMeasure = SKIN:GetMeasure("MeasureDelugeInput")
+    inputString  = InputMeasure:GetStringValue()
+    if string.len(inputString) < 40 then
+        print("Unusually short output: ")
+        print(inputString)
+        return
+    end
+
+    parseInput()
+    -- get total upload/download
+    local totalUpload   = 0
+    local totalDownload = 0
+    for _,torrent in pairs(torrentTable) do
+        totalUpload   = torrent["Up Speed"]   + totalUpload
+        totalDownload = torrent["Down Speed"] + totalDownload
+    end
+end
 
 -- https://gist.github.com/hashmal/874792
 -- Print contents of `tbl`, with indentation.
@@ -84,31 +127,15 @@ function trim(str, delims)
     return rStr
 end
 
-function Initialize()
-    print("~~~~~~~~~~~~~~~~~~~~INIT~~~~~~~~~~~~~~~~~~~~")
-    local inFile  = SKIN:MakePathAbsolute('in.txt')
-    local outFile = SKIN:MakePathAbsolute('out.txt')
+-- reads the input string and saves data into torrentTable
+function parseInput()
+    print("~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~")
     local lineTable, lineTableLen = readFile(inFile)
-
-    local keyWordTable = {  "Name: ",
-                            "ID: ",
-                            "State: ",
-                            "Up Speed: ",
-                            "Seeds: ",
-                            "Peers: ",
-                            "Availability: ",
-                            "Size: ",
-                            "Ratio: ",
-                            "Seed time: ",
-                            "Active: ",
-                            "Tracker status: ",
-                            "::Files",
-                            "::Peers"}
 
     -- create a table of torrent objects,
     -- each containing all the information provided from the input
-    local torrentTable = {}
-    local torrent      = {}
+    torrentTable  = {}
+    local torrent = {}
 
     for lineIndex, line in pairs(lineTable) do -- look through each line
         for wordIndex, word in pairs(keyWordTable) do -- check each line for keywords
@@ -200,4 +227,9 @@ function Initialize()
     end
     print("~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~")
     tprint(torrentTable)
+end
+
+-- convert all numbers to their base form
+function formatTorrent(torrent)
+
 end
