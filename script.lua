@@ -17,19 +17,20 @@ function Initialize()
     local inFile  = SKIN:MakePathAbsolute('in.txt')
     local outFile = SKIN:MakePathAbsolute('out.txt')
 
-    local keyWordTable = {"Name: ",
-    "ID: ",
-    "State: ",
-    "Up Speed: ",
-    "Seeds: ",
-    "Availability: ",
-    "Size: ",
-    "Ratio: ",
-    "Seed time: ",
-    "Active: ",
-    "Tracker status: ",
-    "::Files",
-    "::Peers"}
+    local keyWordTable = {  "Name: ",
+                            "ID: ",
+                            "State: ",
+                            "Up Speed: ",
+                            "Seeds: ",
+                            "Peers: ",
+                            "Availability: ",
+                            "Size: ",
+                            "Ratio: ",
+                            "Seed time: ",
+                            "Active: ",
+                            "Tracker status: ",
+                            "::Files",
+                            "::Peers"}
 
     -- create a table of torrent objects,
     -- each containing all the information provided from the input
@@ -40,26 +41,28 @@ function Initialize()
     local lineTable, lineTableLen   = readFile(inFile)
     print("lineTableLen: " .. lineTableLen)
     local fileStr     = ""
-    local prevWord    = {s = nil, e = nil}
-    local currentWord = {s = nil, e = nil}
+    -- local prevWord    = {s = nil, e = nil}
+    -- local currentWord = {s = nil, e = nil}
     local torrent = {}
 
-    for index,line in pairs(lineTable) do -- look through each line
-        for _, word in pairs(keyWordTable) do -- check each line for keywords
-            local iStart, iEnd = string.find(line, word)
-            if  iStart ~= nil then -- if found word, handle it
-                prevWord = currentWord
+    -- TODO: fix variable names, too confusing as is
+
+    for lineIndex,line in pairs(lineTable) do -- look through each line
+        for wordIndex, word in pairs(keyWordTable) do -- check each line for keywords
+            local wordStartIndex, wordEndIndex = string.find(line, word)
+            if  wordStartIndex ~= nil then -- if found word, handle it
+                -- prevWord = currentWord
 
                 if  word == "Name: " or         --whole line
                     word == "ID: "   or
                     word == "Tracker status: " then
-                        torrent[word] = string.sub(line, iEnd)
+                        torrent[word] = string.sub(line, wordEndIndex)
                         print("torrent[" .. word .."]: " .. torrent[word])
                 elseif  word == "::Files" then  --series of whole lines
                     --read lines until "::Peers"
                     local fileTable  = {}
                     local count      = 1
-                    local tIdx       = index+count
+                    local tIdx       = lineIndex+count
                     if    tIdx       > lineTableLen then return end
                     local tStr       = lineTable[tIdx]
 
@@ -81,7 +84,7 @@ function Initialize()
                     --read lines until "::Peers"
                     local peerTable  = {}
                     local count      = 1
-                    local tIdx       = index+count
+                    local tIdx       = lineIndex+count
                     if    tIdx       > lineTableLen then return end
                     local tStr       = lineTable[tIdx]
 
@@ -97,20 +100,26 @@ function Initialize()
                     end
                     torrent["peers"] = peerTable
                 else                            --part of a single line
-                    local tIdx = index+1
+                    local tIdx = lineIndex+1
                     if    tIdx > lineTableLen then return end
                     local tStr = lineTable[tIdx]
+                    local nextWordInLine = nil
+                    tStr = string.sub(tStr, string.len(word), string.len(tStr))
                     for _, word2 in pairs(keyWordTable) do
-                        -- while string.find(tStr, word2) == nil do
-                            -- string.sub(tStr, tIdx, string.len(tStr) - 1)
-                        -- end
-                        -- string.sub(tStr, tIdx, string.len(tStr) - string.len(word2))
-                        -- torrent[word2] = tStr
+                        local x2, y2 = string.find(tStr, word2)
+
+                        if x2 ~= nil then
+                            print("112x2 " .. x2)
+                            print(word2)
+                            nextWordInLine = word2
+                            tStr = string.sub(tStr, 0, x2 - 1)
+                            print("120torrent[" .. nextWordInLine .."]: " .. tStr)
+                            break
+                        end
+
                     end
                     -- print(tStr)
 
-                    -- torrent[word] = string.sub(line, iEnd)
-                    print("torrent[" .. word2 .."]: " .. torrent[word])
                 end
             end
         end
