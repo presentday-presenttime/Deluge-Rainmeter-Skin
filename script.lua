@@ -50,6 +50,7 @@ function Update()
         print(inputString)
         return
     end
+    writeFile("scriptOut.txt", inputString)
 
     parseInput(inputString)
     -- -- get total upload/download
@@ -149,9 +150,9 @@ function parseInput(inputString)
     print("~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~")
     local lineTable = {}
     -- local lineTableLen = 0 --= readFile(inFile)
-    for line in string.gmatch(inputString, ".*[\n\r]") do
+    for line in string.gmatch(inputString, "[^\r\n]+") do
         lineTable[#lineTable + 1] = line
-        print(line)
+        -- print(line)
     end
 
     -- create a table of torrent objects,
@@ -174,7 +175,7 @@ function parseInput(inputString)
                     word == "ID: "   or
                     word == "Tracker status: " then
                         torrent[trim(word)] = trim(string.sub(line, wordEndIndex))
-                        print("torrent[" .. word .."]: " .. torrent[trim(word)])
+                        -- print("torrent[" .. word .."]: " .. torrent[trim(word)])
                 elseif  word == "::Files" then  --series of whole lines
                     -- TODO?: make files into a table {path, size, progress, priority}
                     local fileTable     = {}
@@ -186,7 +187,7 @@ function parseInput(inputString)
 
                         -- # is used to get length of table
                         fileTable[#fileTable + 1] = trim(tempLine)
-                        print("fileTable["..#fileTable.."]" .. fileTable[#fileTable])
+                        -- print("fileTable["..#fileTable.."]" .. fileTable[#fileTable])
                         tempLineIndex = tempLineIndex + 1
                         tempLine = lineTable[tempLineIndex]
                     end
@@ -201,7 +202,7 @@ function parseInput(inputString)
                             tempLine ~= nil do
 
                         peerTable[#peerTable + 1] = trim(tempLine)
-                        print("peerTable["..#peerTable.."]" .. peerTable[#peerTable])
+                        -- print("peerTable["..#peerTable.."]" .. peerTable[#peerTable])
 
                         tempLineIndex = tempLineIndex + 1
                         tempLine = lineTable[tempLineIndex]
@@ -226,14 +227,14 @@ function parseInput(inputString)
                             -- cut our substring to just before the start of that word
                             tempString = string.sub(tempString, 0, x2 - 1)
                             torrent[trim(word)] = trim(tempString)
-                            print("torrent[" .. trim(word) .."]: " .. trim(tempString))
+                            -- print("torrent[" .. trim(word) .."]: " .. trim(tempString))
                             break
                         end
 
                     end
                     if not haveFoundWord then
                         torrent[trim(word)] = trim(tempString)
-                        print("torrent[" .. trim(word) .."]: " .. trim(tempString))
+                        -- print("torrent[" .. trim(word) .."]: " .. trim(tempString))
                     end
                     -- print(tempString)
 
