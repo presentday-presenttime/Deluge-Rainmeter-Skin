@@ -35,7 +35,7 @@ function Initialize()
                     "::Peers"
                     }
 
-    inFile       = SKIN:MakePathAbsolute('in.txt') -- used for debugging, will not be used in production
+    inFile       = SKIN:MakePathAbsolute('in2.txt') -- used for debugging, will not be used in production
     outFile      = SKIN:MakePathAbsolute('out.txt') -- currently not used
     torrentTable = {};
 end
@@ -44,22 +44,39 @@ function Update()
     print("stript.Update()")
     InputMeasure = SKIN:GetMeasure("MeasureDelugeInput")
     inputString  = InputMeasure:GetStringValue()
+    print(inputString)
     if string.len(inputString) < 40 then
         print("Unusually short output: ")
         print(inputString)
         return
     end
 
-    parseInput()
-    -- get total upload/download
-    local totalUpload   = 0
-    local totalDownload = 0
-    for _,torrent in pairs(torrentTable) do
-        totalUpload   = torrent["Up Speed"]   + totalUpload
-        totalDownload = torrent["Down Speed"] + totalDownload
-    end
+    parseInput(inputString)
+    -- -- get total upload/download
+    -- local totalUpload   = 0
+    -- local totalDownload = 0
+    -- for _,torrent in pairs(torrentTable) do
+    --     totalUpload   = torrent["Up Speed"]   + totalUpload
+    --     totalDownload = torrent["Down Speed"] + totalDownload
+    -- end
 end
 
+
+function speedStringToFloat(speedString)
+    print("speedStringToFloat")
+    if not speedString or speedString == nil then return 0 end
+    local speedFloat = 0
+    local tempString = string.match(speedString, "%d*%.%d*")
+    local baseNumber = tonumber(tempString)
+    local exponentString = string.match(speedString, "%aiB/s")
+    for key,val in pairs(unitSize) do
+        if exponentString == val then
+            baseNumber = baseNumber * math.pow(1024, key)
+            break
+        end
+    end
+    return baseNumber
+end
 -- https://gist.github.com/hashmal/874792
 -- Print contents of `tbl`, with indentation.
 -- `indent` sets the initial level of indentation.
@@ -128,9 +145,14 @@ function trim(str, delims)
 end
 
 -- reads the input string and saves data into torrentTable
-function parseInput()
+function parseInput(inputString)
     print("~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~")
-    local lineTable, lineTableLen = readFile(inFile)
+    local lineTable = {}
+    -- local lineTableLen = 0 --= readFile(inFile)
+    for line in string.gmatch(inputString, ".*[\n\r]") do
+        lineTable[#lineTable + 1] = line
+        print(line)
+    end
 
     -- create a table of torrent objects,
     -- each containing all the information provided from the input
@@ -226,10 +248,16 @@ function parseInput()
         print("torrent has ended")
     end
     print("~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~")
-    tprint(torrentTable)
+    for i,torrent in pairs(torrentTable) do
+        formatTorrent(torrent)
+        print(i)
+    end
+    -- formatTorrent(torrent)
+    -- tprint(torrentTable)
 end
 
 -- convert all numbers to their base form
 function formatTorrent(torrent)
-
+    speedStringToFloat(torrent["Up Speed"])
+    speedStringToFloat(torrent["Down Speed"])
 end
