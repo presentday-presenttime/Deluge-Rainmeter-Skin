@@ -3,10 +3,10 @@ function Initialize()
     torrentListLength = tonumber(SKIN:GetVariable('TorrentsToShow', 5));
 
     -- check if these are hidden before updating
-    MeterTotalSpeed         = "MeterTotalSpeed"
-    MeterTotalTorrentCount  = "MeterTotalTorrentCount"
-    MeterTotalUploadCount   = "MeterTotalUploadCount"
-    MeterTotalDownloadCount = "MeterTotalDownloadCount"
+    MeterTotalSpeed         = "MeterSpeedVal"
+    MeterTotalTorrentCount  = "MeterTotalCountVal"
+    MeterTotalUploadCount   = "MeterTotalUpCountVal"
+    MeterTotalDownloadCount = "MeterTotalDownCountVal"
     MeterPlayPauseButton    = "MeterPlayPauseButton"
 
 
@@ -39,6 +39,7 @@ function Initialize()
     inFile       = SKIN:MakePathAbsolute('in2.txt') -- used for debugging, will not be used in production
     outFile      = SKIN:MakePathAbsolute('out.txt') -- currently not used
     torrentTable = {};
+    Update()
 end
 
 function Update()
@@ -51,16 +52,29 @@ function Update()
         print(inputString)
         return
     end
-    -- writeFile(outFile, inputString)
 
     parseInput(inputString)
-    -- -- get total upload/download
-    -- local totalUpload   = 0
-    -- local totalDownload = 0
-    -- for _,torrent in pairs(torrentTable) do
-    --     totalUpload   = torrent["Up Speed"]   + totalUpload
-    --     totalDownload = torrent["Down Speed"] + totalDownload
-    -- end
+    local totalUpSpeed   = 0
+    local totalDownSpeed = 0
+    local totalUpCount   = 0
+    local totalDownCount = 0
+    for k,v in pairs(torrentTable) do
+        if v["Up Speed Float"] ~= 0 then
+            totalUpSpeed = totalUpSpeed + v["Up Speed Float"]
+            totalUpCount = totalUpCount + 1
+        end
+        if v["Down Speed Float"] ~= 0 then
+            totalDownSpeed = totalDownSpeed + v["Down Speed Float"]
+            totalDownCount = totalDownCount + 1
+        end
+    end
+    local totalSpeedString = FloatToString(totalDownSpeed) .. "/s   " .. FloatToString(totalUpSpeed) .. "/s"
+    print(totalSpeedString)
+    SKIN:Bang('!SetOption', MeterTotalSpeed,         'Text', totalSpeedString)
+    SKIN:Bang('!SetOption', MeterTotalTorrentCount,  'Text', #torrentTable)
+    SKIN:Bang('!SetOption', MeterTotalUploadCount,   'Text', totalUpCount)
+    SKIN:Bang('!SetOption', MeterTotalDownloadCount, 'Text', totalDownCount)
+
 end
 
 
@@ -80,16 +94,24 @@ function speedStringToFloat(speedString)
     return baseNumber
 end
 
-function FloatToSpeedString(floatVal)
+function FloatToString ( floatVal )
     if not floatVal or floatVal == nil then return 0 end
     local exponent = 0
     local val = floatVal
+    local outStr = ""
     while val > 1024 do
         val = val / 1024
         exponent = exponent + 1
     end
-    return val .. unitSize(exponent) .. "/s"
+    if unitSize[exponent] ~= nil then
+        exponent = unitSize[exponent]
+    else
+        exponent = "bit"
+    end
+    outStr = string.format("%04.1f %s", val, exponent)
+    return outStr
 end
+
 -- https://gist.github.com/hashmal/874792
 -- Print contents of `tbl`, with indentation.
 -- `indent` sets the initial level of indentation.
@@ -135,8 +157,6 @@ function readFile(filePath)
         count = count + 1
     end
 
-
-    -- local text = file:read()
     file:close()
 
     return rStr, count
@@ -173,14 +193,10 @@ end
 -- reads the input string and saves data into torrentTable
 function parseInput(inputString)
     print("~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~")
-    -- writeFile(outFile, "~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~\n")
-    -- writeFile(outFile, "~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~\n")
-    -- SKIN:Bang('!Log', SELF:GetName()..'~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~\n')
+
     local lineTable = {}
-    -- local lineTableLen = 0 --= readFile(inFile)
     for line in string.gmatch(inputString, "[^\r\n]+") do
         lineTable[#lineTable + 1] = line
-        -- print(line)
     end
 
     -- create a table of torrent objects,
@@ -195,7 +211,6 @@ function parseInput(inputString)
                 if  word == "Name: " and
                     next(torrent) ~= nil then
                     torrentTable[#torrentTable + 1] = torrent
-                    -- print("torrent has ended")
                     torrent = {}
                 end
 
@@ -203,7 +218,6 @@ function parseInput(inputString)
                     word == "ID: "   or
                     word == "Tracker status: " then
                         torrent[trim(word)] = trim(string.sub(line, wordEndIndex))
-                        -- print("torrent[" .. word .."]: " .. torrent[trim(word)])
                 elseif  word == "::Files" then  --series of whole lines
                     -- TODO?: make files into a table {path, size, progress, priority}
                     local fileTable     = {}
@@ -215,7 +229,6 @@ function parseInput(inputString)
 
                         -- # is used to get length of table
                         fileTable[#fileTable + 1] = trim(tempLine)
-                        -- print("fileTable["..#fileTable.."]" .. fileTable[#fileTable])
                         tempLineIndex = tempLineIndex + 1
                         tempLine = lineTable[tempLineIndex]
                     end
@@ -230,7 +243,6 @@ function parseInput(inputString)
                             tempLine ~= nil do
 
                         peerTable[#peerTable + 1] = trim(tempLine)
-                        -- print("peerTable["..#peerTable.."]" .. peerTable[#peerTable])
 
                         tempLineIndex = tempLineIndex + 1
                         tempLine = lineTable[tempLineIndex]
@@ -255,17 +267,13 @@ function parseInput(inputString)
                             -- cut our substring to just before the start of that word
                             tempString = string.sub(tempString, 0, x2 - 1)
                             torrent[trim(word)] = trim(tempString)
-                            -- print("torrent[" .. trim(word) .."]: " .. trim(tempString))
                             break
                         end
 
                     end
                     if not haveFoundWord then
                         torrent[trim(word)] = trim(tempString)
-                        -- print("torrent[" .. trim(word) .."]: " .. trim(tempString))
                     end
-                    -- print(tempString)
-
                 end
             end
         end
@@ -274,24 +282,24 @@ function parseInput(inputString)
     -- add final torrent to the table
     if next(torrent) ~= nil then
         torrentTable[#torrentTable + 1] = torrent
-        -- print("torrent has ended")
     end
     print("~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~")
-    -- writeFile(outFile, "~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~\n")
     for i,torrent in pairs(torrentTable) do
         formatTorrent(torrent)
-        -- writeFile(outFile, i .. ", ")
     end
-    -- formatTorrent(torrent)
-    -- twrite(torrentTable, 0, outFile)
-    tprint(torrentTable)
 end
 
 -- convert all numbers to their base form
 function formatTorrent(torrent)
     torrent["Up Speed Float"]       = speedStringToFloat(torrent["Up Speed"])
     torrent["Down Speed Float"]     = speedStringToFloat(torrent["Down Speed"])
-    -- torrent["Up Speed Formatted"]   = FloatToSpeedString(torrent["Up Speed Float"])
-    -- torrent["Down Speed Formatted"] = FloatToSpeedString(torrent["Down Speed Float"])
-    -- speedStringToFloat(torrent["Down Speed"])
+    -- Dont store strings, parse the float on output
+    if(torrent["Up Speed Float"] ~= 0) then
+        print("torrent[\"Up Speed Float\"]      " .. torrent["Up Speed Float"]      )
+        print(FloatToString(torrent["Up Speed Float"]) .. "/s")
+    end
+    if(torrent["Down Speed Float"] ~= 0) then
+        print("torrent[\"Down Speed Float\"]    " .. torrent["Down Speed Float"]    )
+        -- print("torrent[\"Down Speed Formatted\"]" .. torrent["Down Speed Formatted"])
+    end
 end
