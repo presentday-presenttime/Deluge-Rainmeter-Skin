@@ -1,4 +1,5 @@
 function Initialize()
+    print("script.Initialize")
     torrentListLength = tonumber(SKIN:GetVariable('TorrentsToShow', 5));
 
     -- check if these are hidden before updating
@@ -41,7 +42,7 @@ function Initialize()
 end
 
 function Update()
-    print("stript.Update()")
+    print("script.Update")
     InputMeasure = SKIN:GetMeasure("MeasureDelugeInput")
     inputString  = InputMeasure:GetStringValue()
     print(inputString)
@@ -50,7 +51,7 @@ function Update()
         print(inputString)
         return
     end
-    writeFile("scriptOut.txt", inputString)
+    -- writeFile(outFile, inputString)
 
     parseInput(inputString)
     -- -- get total upload/download
@@ -64,19 +65,30 @@ end
 
 
 function speedStringToFloat(speedString)
-    print("speedStringToFloat")
+    -- print("speedStringToFloat")
     if not speedString or speedString == nil then return 0 end
     local speedFloat = 0
     local tempString = string.match(speedString, "%d*%.%d*")
     local baseNumber = tonumber(tempString)
     local exponentString = string.match(speedString, "%aiB/s")
     for key,val in pairs(unitSize) do
-        if exponentString == val then
+        if exponentString == val .. "/s" then
             baseNumber = baseNumber * math.pow(1024, key)
             break
         end
     end
     return baseNumber
+end
+
+function FloatToSpeedString(floatVal)
+    if not floatVal or floatVal == nil then return 0 end
+    local exponent = 0
+    local val = floatVal
+    while val > 1024 do
+        val = val / 1024
+        exponent = exponent + 1
+    end
+    return val .. unitSize(exponent) .. "/s"
 end
 -- https://gist.github.com/hashmal/874792
 -- Print contents of `tbl`, with indentation.
@@ -92,6 +104,19 @@ function tprint (tbl, indent)
       print(formatting .. v)
     end
   end
+end
+
+function twrite (tbl, indent, filePath)
+    if not indent then indent = 0 end
+    for k, v in pairs(tbl) do
+        formatting = string.rep("  ", indent) .. k .. ":] "
+        if type(v) == "table" then
+            writeFile(filePath, formatting .. "\n")
+            twrite(v, indent+1, filePath)
+        else
+            writeFile(filePath, formatting .. v .. "\n")
+        end
+    end
 end
 
 function readFile(filePath)
@@ -118,7 +143,7 @@ function readFile(filePath)
 end
 
 function writeFile(filePath, text)
-    local file = io.open(filePath, 'w')
+    local file = io.open(filePath, 'a')
 
     if not file then
         print('cant write file')
@@ -148,6 +173,9 @@ end
 -- reads the input string and saves data into torrentTable
 function parseInput(inputString)
     print("~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~")
+    -- writeFile(outFile, "~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~\n")
+    -- writeFile(outFile, "~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~\n")
+    -- SKIN:Bang('!Log', SELF:GetName()..'~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~\n')
     local lineTable = {}
     -- local lineTableLen = 0 --= readFile(inFile)
     for line in string.gmatch(inputString, "[^\r\n]+") do
@@ -167,7 +195,7 @@ function parseInput(inputString)
                 if  word == "Name: " and
                     next(torrent) ~= nil then
                     torrentTable[#torrentTable + 1] = torrent
-                    print("torrent has ended")
+                    -- print("torrent has ended")
                     torrent = {}
                 end
 
@@ -246,19 +274,24 @@ function parseInput(inputString)
     -- add final torrent to the table
     if next(torrent) ~= nil then
         torrentTable[#torrentTable + 1] = torrent
-        print("torrent has ended")
+        -- print("torrent has ended")
     end
-    print("~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~")
+    print("~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~")
+    -- writeFile(outFile, "~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~\n")
     for i,torrent in pairs(torrentTable) do
         formatTorrent(torrent)
-        print(i)
+        -- writeFile(outFile, i .. ", ")
     end
     -- formatTorrent(torrent)
-    -- tprint(torrentTable)
+    -- twrite(torrentTable, 0, outFile)
+    tprint(torrentTable)
 end
 
 -- convert all numbers to their base form
 function formatTorrent(torrent)
-    speedStringToFloat(torrent["Up Speed"])
-    speedStringToFloat(torrent["Down Speed"])
+    torrent["Up Speed Float"]       = speedStringToFloat(torrent["Up Speed"])
+    torrent["Down Speed Float"]     = speedStringToFloat(torrent["Down Speed"])
+    -- torrent["Up Speed Formatted"]   = FloatToSpeedString(torrent["Up Speed Float"])
+    -- torrent["Down Speed Formatted"] = FloatToSpeedString(torrent["Down Speed Float"])
+    -- speedStringToFloat(torrent["Down Speed"])
 end
