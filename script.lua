@@ -43,10 +43,10 @@ function Initialize()
 end
 
 function Update()
-    print("script.Update")
+    -- print("script.Update")
     InputMeasure = SKIN:GetMeasure("MeasureDelugeInput")
     inputString  = InputMeasure:GetStringValue()
-    print(inputString)
+    -- print(inputString)
     if string.len(inputString) < 40 then
         print("Unusually short output: ")
         print(inputString)
@@ -69,7 +69,7 @@ function Update()
         end
     end
     local totalSpeedString = FloatToString(totalDownSpeed) .. "/s   " .. FloatToString(totalUpSpeed) .. "/s"
-    print(totalSpeedString)
+    -- print(totalSpeedString)
     SKIN:Bang('!SetOption', MeterTotalSpeed,         'Text', totalSpeedString)
     SKIN:Bang('!SetOption', MeterTotalTorrentCount,  'Text', #torrentTable)
     SKIN:Bang('!SetOption', MeterTotalUploadCount,   'Text', totalUpCount)
@@ -192,7 +192,7 @@ end
 
 -- reads the input string and saves data into torrentTable
 function parseInput(inputString)
-    print("~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~")
+    -- print("~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~")
 
     local lineTable = {}
     for line in string.gmatch(inputString, "[^\r\n]+") do
@@ -283,7 +283,7 @@ function parseInput(inputString)
     if next(torrent) ~= nil then
         torrentTable[#torrentTable + 1] = torrent
     end
-    print("~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~")
+    -- print("~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~")
     for i,torrent in pairs(torrentTable) do
         formatTorrent(torrent)
     end
@@ -295,11 +295,11 @@ function formatTorrent(torrent)
     torrent["Down Speed Float"]     = speedStringToFloat(torrent["Down Speed"])
     -- Dont store strings, parse the float on output
     if(torrent["Up Speed Float"] ~= 0) then
-        print("torrent[\"Up Speed Float\"]      " .. torrent["Up Speed Float"]      )
-        print(FloatToString(torrent["Up Speed Float"]) .. "/s")
+        -- print("torrent[\"Up Speed Float\"]      " .. torrent["Up Speed Float"]      )
+        -- print(FloatToString(torrent["Up Speed Float"]) .. "/s")
     end
     if(torrent["Down Speed Float"] ~= 0) then
-        print("torrent[\"Down Speed Float\"]    " .. torrent["Down Speed Float"]    )
+        -- print("torrent[\"Down Speed Float\"]    " .. torrent["Down Speed Float"]    )
         -- print("torrent[\"Down Speed Formatted\"]" .. torrent["Down Speed Formatted"])
     end
 end
