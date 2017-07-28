@@ -1,5 +1,13 @@
+debug = false
+err = true
+function log(str, bool)
+    if bool then
+        print(str)
+    end
+end
+
 function Initialize()
-    print("script.Initialize")
+    log("script.Initialize", debug)
     torrentListLength = tonumber(SKIN:GetVariable('TorrentsToShow', 5));
 
     -- check if these are hidden before updating
@@ -36,20 +44,18 @@ function Initialize()
                     "::Peers"
                     }
 
-    inFile       = SKIN:MakePathAbsolute('in2.txt') -- used for debugging, will not be used in production
-    outFile      = SKIN:MakePathAbsolute('out.txt') -- currently not used
     torrentTable = {};
     Update()
 end
 
 function Update()
-    -- print("script.Update")
+    log("script.Update", debug)
     InputMeasure = SKIN:GetMeasure("MeasureDelugeInput")
     inputString  = InputMeasure:GetStringValue()
-    -- print(inputString)
+    log(inputString, debug)
     if string.len(inputString) < 40 then
-        print("Unusually short output: ")
-        print(inputString)
+        log("Unusually short output: ", err)
+        log(inputString, err)
         return
     end
 
@@ -69,17 +75,16 @@ function Update()
         end
     end
     local totalSpeedString = FloatToString(totalDownSpeed) .. "/s   " .. FloatToString(totalUpSpeed) .. "/s"
-    -- print(totalSpeedString)
+    log(totalSpeedString, debug)
     SKIN:Bang('!SetOption', MeterTotalSpeed,         'Text', totalSpeedString)
     SKIN:Bang('!SetOption', MeterTotalTorrentCount,  'Text', #torrentTable)
     SKIN:Bang('!SetOption', MeterTotalUploadCount,   'Text', totalUpCount)
     SKIN:Bang('!SetOption', MeterTotalDownloadCount, 'Text', totalDownCount)
-
 end
 
 
 function speedStringToFloat(speedString)
-    -- print("speedStringToFloat")
+    log("speedStringToFloat", debug)
     if not speedString or speedString == nil then return 0 end
     local speedFloat = 0
     local tempString = string.match(speedString, "%d*%.%d*")
@@ -144,7 +149,7 @@ end
 function readFile(filePath)
     local file = io.open(filePath)
     if not file then
-        print ('cant read file')
+        log('cant read file', err)
         return
     end
 
@@ -166,7 +171,7 @@ function writeFile(filePath, text)
     local file = io.open(filePath, 'a')
 
     if not file then
-        print('cant write file')
+        log('cant write file', err)
         return
     end
 
@@ -192,7 +197,7 @@ end
 
 -- reads the input string and saves data into torrentTable
 function parseInput(inputString)
-    -- print("~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~")
+    log("~~~~~~~~~~~~~~~~~~~~Parse~~~~~~~~~~~~~~~~~~~~", debug)
 
     local lineTable = {}
     for line in string.gmatch(inputString, "[^\r\n]+") do
@@ -283,7 +288,7 @@ function parseInput(inputString)
     if next(torrent) ~= nil then
         torrentTable[#torrentTable + 1] = torrent
     end
-    -- print("~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~")
+    log("~~~~~~~~~~~~~~~~~~~~END~~~~~~~~~~~~~~~~~~~~~~", debug)
     for i,torrent in pairs(torrentTable) do
         formatTorrent(torrent)
     end
@@ -295,11 +300,11 @@ function formatTorrent(torrent)
     torrent["Down Speed Float"]     = speedStringToFloat(torrent["Down Speed"])
     -- Dont store strings, parse the float on output
     if(torrent["Up Speed Float"] ~= 0) then
-        -- print("torrent[\"Up Speed Float\"]      " .. torrent["Up Speed Float"]      )
-        -- print(FloatToString(torrent["Up Speed Float"]) .. "/s")
+        log("torrent[\"Up Speed Float\"]      " .. torrent["Up Speed Float"]      , debug)
+        log(FloatToString(torrent["Up Speed Float"]) .. "/s",                       debug)
     end
     if(torrent["Down Speed Float"] ~= 0) then
-        -- print("torrent[\"Down Speed Float\"]    " .. torrent["Down Speed Float"]    )
-        -- print("torrent[\"Down Speed Formatted\"]" .. torrent["Down Speed Formatted"])
+        log("torrent[\"Down Speed Float\"]    " .. torrent["Down Speed Float"]    , debug)
+        log("torrent[\"Down Speed Formatted\"]" .. torrent["Down Speed Formatted"], debug)
     end
 end
